@@ -1,5 +1,5 @@
 import {render} from '../lib/mail-template.mjs';
-const fields=['name','email','brand','model','year','length','width','mass','maximum','payload','beds','price','total','notes','quantity'];
+const fields=['name','brand','model','year','length','width','mass','maximum','payload','beds','price','total','notes','quantity'];
 const email=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const reply=(code,data)=>new Response(JSON.stringify(data),{status:code,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
 export default async function handler(request){
@@ -11,7 +11,7 @@ export default async function handler(request){
   const raw=await request.text();if(Buffer.byteLength(raw)>20000)return reply(413,{error:'De aanvraag is te groot.'});
   const data=JSON.parse(raw);if(!data||typeof data!=='object'||Array.isArray(data)||data.website)throw Error();
   values=Object.fromEntries(fields.map(k=>[k,typeof data[k]==='string'?data[k].trim():'']));
-  if(Object.values(values).some(v=>v.length>3000)||['name','email','brand','model','total','quantity'].some(k=>!values[k])||!email.test(values.email))throw Error();
+  if(Object.values(values).some(v=>v.length>3000)||['name','brand','model','total','quantity'].some(k=>!values[k]))throw Error();
   if(!/^\d+$/.test(values.quantity)||Number(values.quantity)<1||Number(values.quantity)>100)throw Error();
   for(const k of ['year','length','width','mass','maximum','payload','beds','price','total']){
    if(values[k]&&(!/^\d+(?:[.,]\d+)?$/.test(values[k])||!Number.isFinite(Number(values[k].replace(',','.')))||Number(values[k].replace(',','.'))>1e10))throw Error();
@@ -23,7 +23,7 @@ export default async function handler(request){
  const {BREVO_API_KEY,MAIL_FROM,MAIL_TO}=process.env;
  if(!BREVO_API_KEY||!MAIL_FROM||!MAIL_TO)return reply(503,{error:'E-mailverzending moet nog worden ingesteld. Er is niets verstuurd.'});
  try{
-  const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':BREVO_API_KEY,'Content-Type':'application/json','Accept':'application/json'},signal:AbortSignal.timeout(15000),body:JSON.stringify({sender:{name:process.env.MAIL_FROM_NAME||'Caravan winkelkaart',email:MAIL_FROM},to:[{email:MAIL_TO}],replyTo:{name:values.name,email:values.email},subject:'Nieuwe aanvraag caravanwinkelkaart',htmlContent:render(values,options)})});
+  const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':BREVO_API_KEY,'Content-Type':'application/json','Accept':'application/json'},signal:AbortSignal.timeout(15000),body:JSON.stringify({sender:{name:process.env.MAIL_FROM_NAME||'Caravan winkelkaart',email:MAIL_FROM},to:[{email:MAIL_TO}],subject:'Nieuwe aanvraag caravanwinkelkaart',htmlContent:render(values,options,new URL('/assets/logo-vanduinkerken.png',process.env.URL||request.url).href)})});
   if(!response.ok)throw Error();
   const result=await response.json();if(!result.messageId)throw Error();
   return reply(200,{ok:true});
