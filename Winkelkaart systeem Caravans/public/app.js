@@ -51,7 +51,7 @@ form.addEventListener('submit',async event=>{
   const response=await fetch('/api/requests',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({...data,options:readOptions()})});
   if(response.status===429)throw new Error('Er zijn te veel aanvragen verstuurd. Wacht één minuut en probeer het opnieuw. Je gegevens blijven staan.');
   const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Versturen is niet gelukt. Je gegevens blijven staan.');
-  form.reset();optionRows.replaceChildren();optionId=0;addOption();addOption();addOption();preview();status.textContent='Je aanvraag is verstuurd. Bedankt!';
+  form.reset();resetOrderWarning();optionRows.replaceChildren();optionId=0;addOption();addOption();addOption();preview();status.textContent=result.historySaved===false?'Je aanvraag is verstuurd, maar het ordernummer kon niet worden opgeslagen. Verstuur de aanvraag niet opnieuw.':'Je aanvraag is verstuurd. Bedankt!'+(result.duplicate?' Dit ordernummer was al eerder gebruikt.':'');
  }catch(error){status.textContent=error.message||'Versturen is niet gelukt. Probeer het later opnieuw.';}
  finally{send.disabled=false;}
 });

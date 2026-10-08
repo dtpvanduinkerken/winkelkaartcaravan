@@ -15,3 +15,9 @@ Deze versie gebruikt Netlify Functions en de Brevo API. Het bestaande formulier,
 De API-sleutel blijft op de server. De functie valideert de velden en ontsmet de e-mailtekst. De ontvanger wordt uitsluitend door de serverinstellingen bepaald. Netlify beperkt deze route tot vijf aanvragen per minuut per IP en domein; de browser voorkomt dubbelklikken. Aanvragen worden niet door de app opgeslagen, maar Brevo verwerkt de e-mails.
 
 Kies het Free-abonnement. Houd Netlify- en Brevo-gebruiksgrenzen in de gaten; gratis hosting is niet onbeperkt. Deze bestanden zijn voorbereid en lokaal getest; publicatie en echte API-bezorging moeten na het instellen nog worden gecontroleerd.
+
+## Ordernummeroverzicht
+
+Ordernummers worden na geaccepteerde e-mailverzending gedeeld bewaard in Netlify Blobs. Er zijn geen extra API-sleutels nodig. De gegevens blijven bij nieuwe deploys behouden. Alleen ordernummer en eerste verzenddatum worden opgeslagen. Het overzicht is toegankelijk voor bezoekers van de app; er is geen login. Voorloopnullen blijven behouden en hoofdletters tellen niet mee bij de herkenning. Dubbel gebruik geeft een waarschuwing en blokkeert een nieuwe aanvraag niet. Eerdere aanvragen worden niet achteraf geïmporteerd. Previewdeploys gebruiken een aparte opslag. Lokaal bewaart Python nummers in .orders.json, uitgesloten van Git; deze worden niet naar Netlify overgezet.
+
+Upload ook package.json, package-lock.json en netlify/functions/orders.mjs plus de aangepaste public- en netlify/lib-bestanden. Netlify installeert de opslagbibliotheek automatisch. Controleer na deploy met een fictief ordernummer de verzending, het overzicht en de waarschuwing vanaf een tweede browser.

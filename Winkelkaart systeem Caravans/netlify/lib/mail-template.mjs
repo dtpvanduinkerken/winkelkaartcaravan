@@ -4,7 +4,7 @@ export function render(v,options,logoUrl){
  const rows=items=>items.filter(([,value])=>value!=='').map(([label,value])=>`<tr><td style="padding:10px 12px;border-bottom:1px solid #e4e9e3;color:#617065;width:55%">${esc(label)}</td><td style="padding:10px 12px;border-bottom:1px solid #e4e9e3;font-weight:bold">${esc(value)}</td></tr>`).join('');
  const table=items=>`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">${rows(items)}</table>`;
  const block=(title,body)=>`<h2 style="font-size:17px;color:#084422;margin:28px 0 12px">${esc(title)}</h2>${body}`;
- let body=block('De caravan',table([['Merk',v.brand],['Model',v.model],['Modeljaar',v.year],['Aantal winkelkaarten',v.quantity]]));
+ let body=block('De caravan',table([['Ordernummer',v.orderNumber||''],['Merk',v.brand],['Model',v.model],['Modeljaar',v.year],['Aantal winkelkaarten',v.quantity]]));
  const specs=[['length','Totale lengte','cm'],['width','Breedte','cm'],['mass','Massa rijklaar','kg'],['maximum','Maximale massa','kg'],['payload','Bijlading','kg'],['beds','Slaapplaatsen','']].filter(([key])=>v[key]).map(([key,label,unit])=>[label,v[key]+(unit?' '+unit:'')]);
  if(specs.length)body+=block('Specificaties',table(specs));
  if(options.length)body+=block('Opties en accessoires',`<table width="100%" cellpadding="10" cellspacing="0" style="border-collapse:collapse;font-size:14px"><tr style="background:#eef4e6"><th align="left" scope="col">Optie / accessoire</th><th align="right" scope="col">Prijs</th></tr>${options.map(o=>`<tr><td style="border-bottom:1px solid #e4e9e3">${esc(o.name)}</td><td align="right" style="border-bottom:1px solid #e4e9e3;white-space:nowrap">${o.price?esc(euro(o.price)):'—'}</td></tr>`).join('')}</table>`);

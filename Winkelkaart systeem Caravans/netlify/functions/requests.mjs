@@ -1,8 +1,9 @@
+import {orderRepository,validOrder} from '../lib/orders.mjs';
 import {render} from '../lib/mail-template.mjs';
-const fields=['name','brand','model','year','length','width','mass','maximum','payload','beds','price','total','notes','quantity'];
+const fields=['orderNumber','name','brand','model','year','length','width','mass','maximum','payload','beds','price','total','notes','quantity'];
 const email=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const reply=(code,data)=>new Response(JSON.stringify(data),{status:code,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
-export default async function handler(request){
+export async function handleRequest(request,repositoryFactory=orderRepository){
  if(request.method!=='POST')return reply(405,{error:'Niet toegestaan.'});
  const origin=request.headers.get('origin');
  if(origin && origin!==new URL(request.url).origin)return reply(403,{error:'Deze aanvraag is niet toegestaan.'});
@@ -12,6 +13,7 @@ export default async function handler(request){
   const data=JSON.parse(raw);if(!data||typeof data!=='object'||Array.isArray(data)||data.website)throw Error();
   values=Object.fromEntries(fields.map(k=>[k,typeof data[k]==='string'?data[k].trim():'']));
   if(Object.values(values).some(v=>v.length>3000)||['name','brand','model','total','quantity'].some(k=>!values[k]))throw Error();
+  if(!validOrder(values.orderNumber))throw Error();
   if(!/^\d+$/.test(values.quantity)||Number(values.quantity)<1||Number(values.quantity)>100)throw Error();
   for(const k of ['year','length','width','mass','maximum','payload','beds','price','total']){
    if(values[k]&&(!/^\d+(?:[.,]\d+)?$/.test(values[k])||!Number.isFinite(Number(values[k].replace(',','.')))||Number(values[k].replace(',','.'))>1e10))throw Error();
@@ -26,7 +28,13 @@ export default async function handler(request){
   const response=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':BREVO_API_KEY,'Content-Type':'application/json','Accept':'application/json'},signal:AbortSignal.timeout(15000),body:JSON.stringify({sender:{name:process.env.MAIL_FROM_NAME||'Caravan winkelkaart',email:MAIL_FROM},to:[{email:MAIL_TO}],subject:'Nieuwe aanvraag caravanwinkelkaart',htmlContent:render(values,options,new URL('/assets/logo-vanduinkerken.png',process.env.URL||request.url).href)})});
   if(!response.ok)throw Error();
   const result=await response.json();if(!result.messageId)throw Error();
-  return reply(200,{ok:true});
+  let historySaved=true,duplicate=false;
+  if(values.orderNumber){
+   try{({duplicate}=await repositoryFactory().remember(values.orderNumber));}
+   catch{historySaved=false;}
+  }
+  return reply(200,{ok:true,historySaved,duplicate});
  }catch{return reply(502,{error:'Versturen is niet gelukt. Je gegevens blijven staan. Probeer het later opnieuw.'});}
 }
+export default handleRequest;
 export const config={path:'/api/requests',rateLimit:{windowLimit:5,windowSize:60,aggregateBy:['ip','domain']}};
