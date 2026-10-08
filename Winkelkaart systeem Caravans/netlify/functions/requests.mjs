@@ -36,5 +36,9 @@ export async function handleRequest(request,repositoryFactory=orderRepository){
   return reply(200,{ok:true,historySaved,duplicate});
  }catch{return reply(502,{error:'Versturen is niet gelukt. Je gegevens blijven staan. Probeer het later opnieuw.'});}
 }
-export default handleRequest;
+// Netlify passes a context object as the second argument, not a repository factory.
+export function createHandler(repositoryFactory=orderRepository){
+ return async function handler(request,_context){return handleRequest(request,repositoryFactory);};
+}
+export default createHandler();
 export const config={path:'/api/requests',rateLimit:{windowLimit:5,windowSize:60,aggregateBy:['ip','domain']}};
